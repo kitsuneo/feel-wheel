@@ -59,7 +59,7 @@ kb_builder.row(*basic_emote_buttons, width=3)
 # Этот хэндлер будет срабатывать на команду "/start"
 @dp.message(Command(commands='start'))
 async def process_command_start(message: Message):
-    await message.answer('Это бот колесо эмоций.\nЧтобы найти эмоцию набери /emote')
+    await message.answer('Это бот колесо эмоций.\nЧтобы найти эмоцию наберите /emote')
 
 
 @dp.message(Command(commands='emote'))
@@ -67,14 +67,14 @@ async def process_command_emote(message: Message):
     await message.answer(text='Базовая эмоция>',
                          reply_markup=kb_builder.as_markup(resize_keyboard=True))
 
-@dp.message(F.text.lower().in_(['грусть', 'грустно']))
-async def process_sadness(message: Message):
-    await message.answer(text='горе, печаль, задумчивость, сожаление'
+@dp.message(F.text.lower().in_([k for k, v in EMOTE_DICT.items()]))
+async def process_response(message: Message):
+    await message.answer(text=f'Вы выбрали базовую эмоцию'
         )
 
 @dp.message()
 async def process_other_answers(message: Message):
-    await message.answer('Это я не понимаю\nЧтобы найти эмоцию набери /emote')
+    await message.answer('Это я не понимаю\nЧтобы найти эмоцию наберите /emote')
 
 
 if __name__ == '__main__':
