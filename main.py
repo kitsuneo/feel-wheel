@@ -3,26 +3,18 @@ from aiogram.filters import Command
 from aiogram.types import (KeyboardButton, Message, ReplyKeyboardMarkup,
                            ReplyKeyboardRemove)
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from dotenv import dotenv_values
 import logging
+from dotenv import dotenv_values
+from src.fw_logging import logging_config
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='[%(asctime)s] #%(levelname)-8s %(filename)s:'
-           '%(lineno)d - %(name)s - %(message)s'
-)
+logging_config()
 logger = logging.getLogger(__name__)
-logger.debug('Лог уровня DEBUG')
-
 config = dotenv_values(".env")
 
 API_URL = 'https://api.telegram.org/bot'
 BOT_FW_TOKEN = config['BOT_FW_TOKEN']
-'''
-Data based on 
-https://www.odbtomsk.ru/useful-information/articles-from-the-health-center/795-koleso-emotsij-roberta-plutchika
-'''
-#\U0001F600 \U0001F622
+
+#TODO - move to db/file data
 EMOTE_DICT = {'радость':
                 {'восторг': 1, 'спокойствие': 1, 'оптимизм': 0, 'любовь': 0},
             'грусть':
@@ -41,6 +33,14 @@ EMOTE_DICT = {'радость':
                   {}
 }
 
+'''
+        users[message.from_user.id] = {
+            'previous_emote': None,
+            'current_emote': None
+        }
+'''
+users = {}
+
 
 # Создаем объекты бота и диспетчера
 bot = Bot(token=BOT_FW_TOKEN)
@@ -56,11 +56,14 @@ basic_emote_buttons: list[KeyboardButton] = [
 
 kb_builder.row(*basic_emote_buttons, width=3)
 
-# Этот хэндлер будет срабатывать на команду "/start"
 @dp.message(Command(commands='start'))
 async def process_command_start(message: Message):
     await message.answer('Это бот колесо эмоций.\nЧтобы найти эмоцию наберите /emote')
-
+    if message.from_user.id not in users:
+        users[message.from_user.id] = {
+            'previous_emote': None,
+            'current_emote': None
+        }
 
 @dp.message(Command(commands='emote'))
 async def process_command_emote(message: Message):
