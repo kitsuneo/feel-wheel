@@ -35,6 +35,7 @@ EMOTE_DICT = {'радость':
 
 '''
         users[message.from_user.id] = {
+            id = /???
             'previous_emote': None,
             'current_emote': None
         }
@@ -56,7 +57,7 @@ basic_emote_buttons: list[KeyboardButton] = [
 
 kb_builder.row(*basic_emote_buttons, width=3)
 
-@dp.message(Command(commands='start'))
+@dp.message(Command(commands=['start', 'help']))
 async def process_command_start(message: Message):
     await message.answer('Это бот колесо эмоций.\nЧтобы найти эмоцию наберите /emote')
     if message.from_user.id not in users:
@@ -72,8 +73,26 @@ async def process_command_emote(message: Message):
 
 @dp.message(F.text.lower().in_([k for k, v in EMOTE_DICT.items()]))
 async def process_response(message: Message):
-    await message.answer(text=f'Вы выбрали базовую эмоцию'
-        )
+    # print(message)
+    if message.from_user.id not in users:
+        users[message.from_user.id] = {
+            'previous_emote': None,
+            'current_emote': None
+        }
+    print(message.text)
+    print(users[message.from_user.id]['current_emote'])
+    temp = users[message.from_user.id]['current_emote']
+
+    users[message.from_user.id] = {
+            'previous_emote': temp,
+        }
+
+    users[message.from_user.id] = {
+            'current_emote': message.text
+        }
+
+    await message.answer(text=f'Вы выбрали базовую эмоцию {message.text}. Предыдущая эмоция была {temp}'
+                         )
 
 @dp.message()
 async def process_other_answers(message: Message):
