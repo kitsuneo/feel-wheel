@@ -20,17 +20,17 @@ EMOTE_DICT = {'радость':
             'грусть':
                 {'горе': 1, 'задумчивость': 1, 'сожаление': 0, 'неодобрение': 0},
             'страх':
-                  {},
+                  {'ужас': 1, 'опасение': 1, 'подчинение': 0, 'трепет': 0},
             'доверие':
-                  {},
+                  {'восхищение': 1, 'признание': 1, 'любовь': 0, 'подчинение': 0},
             'ожидание':
-                  {},
+                  {'бдительность': 1, 'интерес': 1, 'оптимизм': 0, 'агрессия': 0},
             'удивление':
-                  {},
+                  {'изумление': 1, 'отвлечение': 1, 'неодобрение': 0, 'трепет': 0},
             'злость':
-                  {},
+                  {'гнев': 1, 'ярость': 1, 'агрессия': 0, 'презрение': 0},
             'неудовольствие':
-                  {}
+                  {'отвращение': 1, 'скука': 1, 'презрение': 0, 'сожаление': 0}
 }
 
 '''
@@ -38,6 +38,7 @@ EMOTE_DICT = {'радость':
             id = /???
             'previous_emote': None,
             'current_emote': None
+            'save_data': 0 | 1
         }
 '''
 users = {}
@@ -63,12 +64,13 @@ async def process_command_start(message: Message):
     if message.from_user.id not in users:
         users[message.from_user.id] = {
             'previous_emote': None,
-            'current_emote': None
+            'current_emote': None,
+            'save_data': 0
         }
 
 @dp.message(Command(commands='emote'))
 async def process_command_emote(message: Message):
-    await message.answer(text='Базовая эмоция>',
+    await message.answer(text='Базовая эмоция',
                          reply_markup=kb_builder.as_markup(resize_keyboard=True))
 
 @dp.message(F.text.lower().in_([k for k, v in EMOTE_DICT.items()]))
@@ -79,19 +81,20 @@ async def process_response(message: Message):
             'previous_emote': None,
             'current_emote': None
         }
-    print(message.text)
-    print(users[message.from_user.id]['current_emote'])
-    temp = users[message.from_user.id]['current_emote']
 
+    temp = users[message.from_user.id]['current_emote']
     users[message.from_user.id] = {
             'previous_emote': temp,
-        }
-
-    users[message.from_user.id] = {
             'current_emote': message.text
         }
 
-    await message.answer(text=f'Вы выбрали базовую эмоцию {message.text}. Предыдущая эмоция была {temp}'
+    deep_emote = EMOTE_DICT.get(message.text)
+    print(deep_emote)
+
+    await message.answer(text=f'''Вы выбрали базовую эмоцию {message.text}.
+                \nОттенки этой эмоции: {" ".join(deep_emote.keys())}
+                \nПредыдущая эмоция была {temp}. 
+                        '''
                          )
 
 @dp.message()
