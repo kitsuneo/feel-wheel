@@ -15,7 +15,7 @@ def get_logpath():
     return get_main_dir() + '/logs'
 
 def logging_config():
-    return logging.basicConfig(filename=get_logpath() + "/builtin_log",
+    return logging.basicConfig(filename=get_logpath() + "-builtin_log",
                                encoding="utf-8",
                                filemode="a",
                                format="%(asctime)s - %(levelname)s - %(message)s",
