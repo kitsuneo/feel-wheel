@@ -1,4 +1,5 @@
 import json
+import os
 import platform
 import logging
 from aiogram import Bot, Dispatcher, F
@@ -6,16 +7,18 @@ from aiogram.filters import Command
 from aiogram.types import (KeyboardButton, Message)
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from dotenv import dotenv_values
-from src.fw_logging import logging_config
-from src.fw_database_crud import db_read_user
-from src.fw_database_crud import db_create_user
-
+from config import logging_config
+from db_crud_users import db_if_user_exists
+from db_crud_users import db_create_user
+from db_crud_users import db_if_keep_data
+from db_crud_users import db_get_fw_id
+from db_crud_emotes import db_create_emote
 
 logging_config()
 logger = logging.getLogger(__name__)
 config = dotenv_values(".env")
 
-API_URL = 'https://api.telegram.org/bot'
+API_URL = config['API_URL']
 # development env vs prod
 if platform.system() == 'Windows':
     BOT_FW_TOKEN = config['BOT_DEV_TOKEN']
@@ -24,16 +27,6 @@ else:
 
 with open('base_emote.json', 'r', encoding='utf-8') as emote_file:
     emote_dict = json.loads(emote_file.read())
-
-'''
-        users[message.from_user.id] = {
-            id = tg_id
-            'previous_emote': None,
-            'current_emote': None
-            'save_data': 0 | 1
-        }
-'''
-users = {}
 
 # keyboard block
 bot = Bot(token=BOT_FW_TOKEN)
@@ -51,12 +44,6 @@ kb_builder.row(*basic_emote_buttons, width=3)
 async def process_command_start(message: Message):
     await message.answer(f'''Это бот колесо эмоций.\nЧтобы найти эмоцию наберите /emote.
             \nСм. https://en.wikipedia.org/wiki/Robert_Plutchik''')
-    if message.from_user.id not in users:
-        users[message.from_user.id] = {
-            'previous_emote': None,
-            'current_emote': None,
-            'save_data': 0
-        }
 
 @dp.message(Command(commands='emote'))
 async def process_command_emote(message: Message):
@@ -66,7 +53,7 @@ async def process_command_emote(message: Message):
 @dp.message(F.text.lower().in_([k for k, v in emote_dict.items()]))
 async def process_response(message: Message):
     # print(message)
-    if db_read_user(message.from_user.id) is None:
+    if not db_if_user_exists(message.from_user.id):
         new_user = {
             'tg_id': message.from_user.id,
             'tg_name': message.from_user.first_name,
@@ -74,24 +61,14 @@ async def process_response(message: Message):
         }
         db_create_user(new_user)
 
-    if message.from_user.id not in users:
-        users[message.from_user.id] = {
-            'previous_emote': None,
-            'current_emote': None
-        }
-
-    temp = users[message.from_user.id]['current_emote']
-    users[message.from_user.id] = {
-            'previous_emote': temp,
-            'current_emote': message.text
-        }
+    if db_if_keep_data(message.from_user.id):
+        db_create_emote(db_get_fw_id(message.from_user.id), message.text)
 
     deep_emote = emote_dict.get(message.text)
-    print(deep_emote)
 
     await message.answer(text=f'''Вы выбрали базовую эмоцию {message.text}.
                 \nОттенки этой эмоции: {" ".join(deep_emote.keys())}
-                \nПредыдущая эмоция была {temp}. 
+                \nПредыдущая эмоция была TODO. 
                         '''
                          )
 
