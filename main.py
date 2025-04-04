@@ -13,6 +13,7 @@ from db_crud_users import db_create_user
 from db_crud_users import db_if_keep_data
 from db_crud_users import db_get_fw_id
 from db_crud_emotes import db_create_emote
+from db_crud_emotes import db_get_last_emote
 
 logging_config()
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ async def process_command_emote(message: Message):
 @dp.message(F.text.lower().in_([k for k, v in emote_dict.items()]))
 async def process_response(message: Message):
     # print(message)
+    last_emote = 'not found'
     if not db_if_user_exists(message.from_user.id):
         new_user = {
             'tg_id': message.from_user.id,
@@ -62,15 +64,16 @@ async def process_response(message: Message):
         db_create_user(new_user)
 
     if db_if_keep_data(message.from_user.id):
-        db_create_emote(db_get_fw_id(message.from_user.id), message.text)
+        user_id = db_get_fw_id(message.from_user.id)
+        last_emote = db_get_last_emote(user_id)
+        db_create_emote(user_id, message.text)
 
     deep_emote = emote_dict.get(message.text)
 
     await message.answer(text=f'''Вы выбрали базовую эмоцию {message.text}.
                 \nОттенки этой эмоции: {" ".join(deep_emote.keys())}
-                \nПредыдущая эмоция была TODO. 
-                        '''
-                         )
+                \nПредыдущая эмоция была {" ".join(last_emote)}.'''
+                    )
 
 @dp.message()
 async def process_other_answers(message: Message):

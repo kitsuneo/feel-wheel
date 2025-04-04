@@ -11,10 +11,12 @@ cursor = connection.cursor()
 def db_read_user(tg_id: int):
     # check if tg id exists
     with connection:
-
-        cursor_obj = cursor.execute('SELECT * FROM Users WHERE tg_id = ?', (tg_id,))
-        found_user = cursor_obj.fetchone()
-        return found_user
+        if db_if_user_exists(tg_id):
+            cursor_obj = cursor.execute('SELECT * FROM Users WHERE tg_id = ?', (tg_id,))
+            found_user = cursor_obj.fetchone()
+            return found_user
+        else:
+            return 'User not found'
 
 def db_get_fw_id(tg_id):
     return db_read_user(tg_id)[0]
@@ -50,9 +52,12 @@ def db_create_user(new_user: dict):
     tg_name = new_user['tg_name']
     keep_data_flag = new_user['keep_data_flag']
 
-    with connection:
-        cursor.execute('''INSERT INTO Users (tg_id, created_date, tg_name, keep_data_flag) VALUES (?, ? , ? , ?)
-            ''', (tg_id, created_date, tg_name, keep_data_flag))
+    if db_if_user_exists(tg_id):
+        logger.error(f'fwlog: user with tg_id {tg_id} already exists')
+    else:
+        with connection:
+            cursor.execute('''INSERT INTO Users (tg_id, created_date, tg_name, keep_data_flag) VALUES (?, ? , ? , ?)
+                ''', (tg_id, created_date, tg_name, keep_data_flag))
 
 
 def db_read_all_users():
