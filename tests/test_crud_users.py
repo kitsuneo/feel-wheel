@@ -12,6 +12,15 @@ def test_db_read_user(tg_id_exists, tg_id_not_exists):
     assert temp[2] > '2025-01-01'
 
 
+def test_inserted_user_data(tg_id_exists):
+    row = db_read_user(tg_id_exists)
+    _, tg_id, _, tg_name, keep_data_flag = row
+
+    assert tg_id == '999'
+    assert tg_name == 'test user'
+    assert keep_data_flag in (0, 1)
+
+
 def test_db_get_fw_id(tg_id_exists, tg_id_not_exists):
     temp = db_get_fw_id(tg_id_exists) # existing tg_id
 
@@ -31,6 +40,7 @@ def test_db_if_user_exists(tg_id_exists, tg_id_not_exists):
 
     assert temp
     assert not temp_n
+
 
 def test_db_read_all_users():
     temp = db_read_all_users()

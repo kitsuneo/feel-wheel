@@ -1,4 +1,5 @@
 import pytest
+import time
 from db_crud_users import db_create_user
 
 
@@ -22,3 +23,11 @@ def tg_id_not_exists():
     user_id = 0
     return user_id
 
+@pytest.fixture(autouse=True)
+def calculate_test_duration():
+    """Report test durations after each function."""
+    start = time.time()
+    yield
+    stop = time.time()
+    delta = stop - start
+    print('\ntest duration : {:0.3} seconds'.format(delta))
