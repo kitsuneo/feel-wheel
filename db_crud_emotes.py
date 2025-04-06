@@ -63,4 +63,3 @@ def get_date_days_ago(days: int=0) -> str:
     """
     return (datetime.now() - timedelta(days=days)).date().isoformat()
 
-#print(db_get_all_user_emotes(1, 7))
