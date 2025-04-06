@@ -1,20 +1,14 @@
 import json
-import os
 import platform
-import logging
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import (KeyboardButton, Message)
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from dotenv import dotenv_values
 from config import logging_config
-from db_crud_users import db_if_user_exists
-from db_crud_users import db_create_user
-from db_crud_users import db_if_keep_data
-from db_crud_users import db_get_fw_id
-from db_crud_emotes import db_create_emote
-from db_crud_emotes import db_get_last_emote
-from db_crud_emotes import db_get_all_user_emotes
+from db_crud_users import *
+from db_crud_emotes import *
+
 
 logging_config()
 logger = logging.getLogger(__name__)
@@ -57,15 +51,17 @@ async def process_command_emote(message: Message):
 async def process_command_emote(message: Message):
 
     total_emotes = db_get_all_user_emotes(db_get_fw_id(message.from_user.id))
-    text = ''
 
     if len(total_emotes) == 0:
-        text = 'У меня нет информации. Возможно вы еще не пользовались выбором эмоций.'
+        text = ('''У меня нет информации. Возможно вы еще не пользовались выбором эмоций.\n
+                Для этого наберите /emote''')
     else:
-        text = "Статистика:\n" + "\n".join("{}\t{}".format(k, v) for k, v in sorted(total_emotes.items(), key=lambda t: -t[1]))
+        text = "Статистика за прошлую неделю:\n" + "\n".join("{}\t{}".format(k, v) for k, v in sorted(total_emotes.items(),
+                                                                                    key=lambda t: -t[1]))
 
     await message.answer(text=text,
                          reply_markup=kb_builder.as_markup(resize_keyboard=True))
+
 
 @dp.message(F.text.lower().in_([k for k, v in emote_dict.items()]))
 async def process_response(message: Message):
@@ -90,6 +86,10 @@ async def process_response(message: Message):
                 \nОттенки этой эмоции: {" ".join(deep_emote.keys())}
                 \nПредыдущая эмоция была {" ".join(last_emote)}.'''
                     )
+
+@dp.message(Command(commands=['mood', 'настроение']))
+async def process_command_start(message: Message):
+    await message.answer(f'''Здесь будет клавиатура со смайликами настроений''')
 
 @dp.message()
 async def process_other_answers(message: Message):

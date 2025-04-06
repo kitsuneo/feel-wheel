@@ -1,7 +1,7 @@
 import logging
 from config import db_path
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -36,16 +36,31 @@ def db_get_last_emote(user_id):
 
     return cursor_obj.fetchone()
 
-def db_get_all_user_emotes(user_id, period=0):
+def db_get_all_user_emotes(user_id, period=7):
 
-    '''return dictionary where key: value -> emote: number '''
+    '''return dictionary where key: value -> emote: number
+     by default calculate last 7 days'''
     user_emotes = {}
+
     with connection:
-        cursor_obj = cursor.execute('''SELECT emote, count(emote) from Emotes where user_id = ? group by emote
-        ''', (user_id,))
+        cursor_obj = cursor.execute('''SELECT emote, count(emote) 
+                            from Emotes 
+                            where user_id = ? and emote_date >= ? 
+                            group by emote'''
+                                    , (user_id, get_date_days_ago(period)))
         emotes_data = cursor_obj.fetchall()
 
         for i in range(len(emotes_data)):
             user_emotes.update({emotes_data[i][0]: emotes_data[i][1]})
 
     return user_emotes
+
+
+def get_date_days_ago(days: int=0) -> str:
+    """
+    Returns date which is x days ago.
+    Use when we need to create a query for weekly etc. data
+    """
+    return (datetime.now() - timedelta(days=days)).date().isoformat()
+
+#print(db_get_all_user_emotes(1, 7))
