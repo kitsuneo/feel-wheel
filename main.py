@@ -78,13 +78,18 @@ async def process_response(message: Message):
     if db_if_keep_data(message.from_user.id):
         user_id = db_get_fw_id(message.from_user.id)
         last_emote = db_get_last_emote(user_id)
+        try:
+            last_emote = " ".join(last_emote)
+        except Exception as e:
+            logger.error(f'fwlog: {e=}')
+
         db_create_emote(user_id, message.text)
 
     deep_emote = emote_dict.get(message.text)
 
     await message.answer(text=f'''Вы выбрали базовую эмоцию {message.text}.
                 \nОттенки этой эмоции: {" ".join(deep_emote.keys())}
-                \nПредыдущая эмоция была {" ".join(last_emote)}.'''
+                \nПредыдущая эмоция была {last_emote}.'''
                     )
 
 @dp.message(Command(commands=['mood', 'настроение']))
